@@ -1,0 +1,452 @@
+[
+  {
+    "columns": [
+      { "expr": { "type": "ref", "table": { "name": "chats" }, "name": "*" } },
+      {
+        "expr": {
+          "type": "binary",
+          "left": { "type": "ref", "table": { "name": "chats" }, "name": "name" },
+          "right": { "type": "string", "value": "General" },
+          "op": "="
+        },
+        "alias": { "name": "is_general_channel" }
+      },
+      {
+        "expr": {
+          "type": "binary",
+          "left": { "type": "ref", "table": { "name": "chats" }, "name": "type" },
+          "right": { "type": "string", "value": "CASE_GROUP" },
+          "op": "="
+        },
+        "alias": { "name": "is_case_group" }
+      },
+      {
+        "expr": {
+          "columns": [
+            {
+              "expr": {
+                "type": "call",
+                "function": { "name": "greatest" },
+                "args": [
+                  {
+                    "type": "call",
+                    "function": { "name": "max" },
+                    "args": [{ "type": "ref", "table": { "name": "messages" }, "name": "created_at" }]
+                  },
+                  { "type": "ref", "table": { "name": "chats" }, "name": "created_at" }
+                ]
+              }
+            }
+          ],
+          "from": [{ "type": "table", "name": { "name": "chat_messages", "alias": "messages" } }],
+          "limit": { "limit": { "type": "integer", "value": 1 } },
+          "where": {
+            "type": "binary",
+            "left": { "type": "ref", "table": { "name": "messages" }, "name": "chat_id" },
+            "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+            "op": "="
+          },
+          "type": "select"
+        },
+        "alias": { "name": "last_message_date" }
+      },
+      {
+        "expr": {
+          "columns": [
+            {
+              "expr": {
+                "type": "cast",
+                "operand": {
+                  "type": "call",
+                  "function": { "name": "count" },
+                  "args": [{ "type": "ref", "table": { "name": "messages" }, "name": "id" }]
+                },
+                "to": { "name": "int" }
+              }
+            }
+          ],
+          "from": [{ "type": "table", "name": { "name": "chat_messages", "alias": "messages" } }],
+          "limit": { "limit": { "type": "integer", "value": 1 } },
+          "where": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": {
+                "type": "binary",
+                "left": {
+                  "type": "binary",
+                  "left": { "type": "ref", "table": { "name": "messages" }, "name": "chat_id" },
+                  "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+                  "op": "="
+                },
+                "right": {
+                  "type": "call",
+                  "function": { "name": "exists" },
+                  "args": [
+                    {
+                      "columns": [{ "expr": { "type": "ref", "table": { "name": "receivers" }, "name": "*" } }],
+                      "from": [
+                        { "type": "table", "name": { "name": "chat_messages_to_accounts", "alias": "receivers" } }
+                      ],
+                      "where": {
+                        "type": "binary",
+                        "left": {
+                          "type": "binary",
+                          "left": {
+                            "type": "binary",
+                            "left": { "type": "ref", "table": { "name": "receivers" }, "name": "message_id" },
+                            "right": { "type": "ref", "table": { "name": "messages" }, "name": "id" },
+                            "op": "="
+                          },
+                          "right": {
+                            "type": "binary",
+                            "left": { "type": "ref", "name": "receiver_id" },
+                            "right": { "type": "string", "value": "3" },
+                            "op": "="
+                          },
+                          "op": "AND"
+                        },
+                        "right": {
+                          "type": "binary",
+                          "left": { "type": "ref", "name": "receiver_read" },
+                          "right": { "type": "boolean", "value": false },
+                          "op": "="
+                        },
+                        "op": "AND"
+                      },
+                      "type": "select"
+                    }
+                  ]
+                },
+                "op": "AND"
+              },
+              "right": {
+                "type": "unary",
+                "op": "NOT",
+                "operand": {
+                  "type": "call",
+                  "function": { "name": "exists" },
+                  "args": [
+                    {
+                      "columns": [{ "expr": { "type": "ref", "table": { "name": "meeting" }, "name": "*" } }],
+                      "from": [{ "type": "table", "name": { "name": "meetings", "alias": "meeting" } }],
+                      "where": {
+                        "type": "binary",
+                        "left": {
+                          "type": "binary",
+                          "left": { "type": "ref", "table": { "name": "meeting" }, "name": "id" },
+                          "right": { "type": "ref", "table": { "name": "messages" }, "name": "meeting_id" },
+                          "op": "="
+                        },
+                        "right": {
+                          "type": "unary",
+                          "op": "NOT",
+                          "operand": {
+                            "type": "binary",
+                            "left": { "type": "ref", "name": "organizer_id" },
+                            "right": { "type": "string", "value": "3" },
+                            "op": "="
+                          }
+                        },
+                        "op": "AND"
+                      },
+                      "type": "select"
+                    }
+                  ]
+                }
+              },
+              "op": "AND"
+            },
+            "right": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "messages" }, "name": "unix_ts" },
+              "right": {
+                "columns": [{ "expr": { "type": "ref", "name": "cleared_unix_ts" } }],
+                "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
+                "limit": { "limit": { "type": "integer", "value": 1 } },
+                "where": {
+                  "type": "binary",
+                  "left": {
+                    "type": "binary",
+                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
+                    "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+                    "op": "="
+                  },
+                  "right": {
+                    "type": "binary",
+                    "left": { "type": "ref", "name": "account_id" },
+                    "right": { "type": "string", "value": "3" },
+                    "op": "="
+                  },
+                  "op": "AND"
+                },
+                "type": "select"
+              },
+              "op": ">"
+            },
+            "op": "AND"
+          },
+          "type": "select"
+        },
+        "alias": { "name": "unread_count" }
+      },
+      {
+        "expr": {
+          "columns": [{ "expr": { "type": "ref", "name": "cleared_unix_ts" } }],
+          "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
+          "limit": { "limit": { "type": "integer", "value": 1 } },
+          "where": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
+              "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+              "op": "="
+            },
+            "right": {
+              "type": "binary",
+              "left": { "type": "ref", "name": "account_id" },
+              "right": { "type": "string", "value": "3" },
+              "op": "="
+            },
+            "op": "AND"
+          },
+          "type": "select"
+        },
+        "alias": { "name": "cleared_unix_ts" }
+      },
+      {
+        "expr": {
+          "columns": [{ "expr": { "type": "ref", "name": "muted_until" } }],
+          "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
+          "limit": { "limit": { "type": "integer", "value": 1 } },
+          "where": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
+              "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+              "op": "="
+            },
+            "right": {
+              "type": "binary",
+              "left": { "type": "ref", "name": "account_id" },
+              "right": { "type": "string", "value": "3" },
+              "op": "="
+            },
+            "op": "AND"
+          },
+          "type": "select"
+        },
+        "alias": { "name": "muted_until" }
+      }
+    ],
+    "from": [{ "type": "table", "name": { "name": "chats" } }],
+    "orderBy": [
+      { "by": { "type": "ref", "name": "is_general_channel" }, "order": "DESC" },
+      { "by": { "type": "ref", "name": "is_case_group" }, "order": "DESC" },
+      { "by": { "type": "ref", "name": "last_message_date" }, "order": "DESC", "nulls": "LAST" }
+    ],
+    "where": {
+      "type": "binary",
+      "left": {
+        "type": "binary",
+        "left": {
+          "type": "binary",
+          "left": {
+            "type": "binary",
+            "left": { "type": "ref", "table": { "name": "chats" }, "name": "type" },
+            "right": {
+              "type": "list",
+              "expressions": [
+                { "type": "string", "value": "DIALOGUE" },
+                { "type": "string", "value": "PATIENT_DIALOGUE" }
+              ]
+            },
+            "op": "IN"
+          },
+          "right": {
+            "type": "call",
+            "function": { "name": "exists" },
+            "args": [
+              {
+                "columns": [{ "expr": { "type": "ref", "table": { "name": "accounts_map" }, "name": "*" } }],
+                "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
+                "where": {
+                  "type": "binary",
+                  "left": {
+                    "type": "binary",
+                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
+                    "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+                    "op": "="
+                  },
+                  "right": {
+                    "type": "binary",
+                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "account_id" },
+                    "right": { "type": "string", "value": "3" },
+                    "op": "="
+                  },
+                  "op": "AND"
+                },
+                "type": "select"
+              }
+            ]
+          },
+          "op": "AND"
+        },
+        "right": {
+          "type": "binary",
+          "left": {
+            "type": "call",
+            "function": { "name": "exists" },
+            "args": [
+              {
+                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
+                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
+                "where": {
+                  "type": "binary",
+                  "left": {
+                    "type": "binary",
+                    "left": {
+                      "type": "binary",
+                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
+                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
+                      "op": "="
+                    },
+                    "right": {
+                      "type": "unary",
+                      "op": "IS NULL",
+                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
+                    },
+                    "op": "AND"
+                  },
+                  "right": {
+                    "type": "binary",
+                    "left": { "type": "ref", "table": { "name": "case" }, "name": "status" },
+                    "right": {
+                      "type": "list",
+                      "expressions": [
+                        { "type": "string", "value": "ACTIVE" },
+                        { "type": "string", "value": "LOCKED" }
+                      ]
+                    },
+                    "op": "IN"
+                  },
+                  "op": "AND"
+                },
+                "type": "select"
+              }
+            ]
+          },
+          "right": {
+            "type": "unary",
+            "op": "IS NULL",
+            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
+          },
+          "op": "OR"
+        },
+        "op": "AND"
+      },
+      "right": {
+        "type": "binary",
+        "left": {
+          "type": "binary",
+          "left": {
+            "type": "call",
+            "function": { "name": "exists" },
+            "args": [
+              {
+                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
+                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
+                "where": {
+                  "type": "binary",
+                  "left": {
+                    "type": "binary",
+                    "left": {
+                      "type": "binary",
+                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
+                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
+                      "op": "="
+                    },
+                    "right": {
+                      "type": "unary",
+                      "op": "IS NULL",
+                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
+                    },
+                    "op": "AND"
+                  },
+                  "right": {
+                    "type": "binary",
+                    "left": { "type": "ref", "table": { "name": "case" }, "name": "owner_id" },
+                    "right": { "type": "string", "value": "3" },
+                    "op": "="
+                  },
+                  "op": "AND"
+                },
+                "type": "select"
+              }
+            ]
+          },
+          "right": {
+            "type": "unary",
+            "op": "IS NULL",
+            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
+          },
+          "op": "OR"
+        },
+        "right": {
+          "type": "binary",
+          "left": {
+            "type": "call",
+            "function": { "name": "exists" },
+            "args": [
+              {
+                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
+                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
+                "where": {
+                  "type": "binary",
+                  "left": {
+                    "type": "binary",
+                    "left": {
+                      "type": "binary",
+                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
+                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
+                      "op": "="
+                    },
+                    "right": {
+                      "type": "unary",
+                      "op": "IS NULL",
+                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
+                    },
+                    "op": "AND"
+                  },
+                  "right": {
+                    "type": "unary",
+                    "op": "NOT",
+                    "operand": {
+                      "type": "binary",
+                      "left": { "type": "ref", "table": { "name": "case" }, "name": "owner_id" },
+                      "right": { "type": "string", "value": "3" },
+                      "op": "="
+                    }
+                  },
+                  "op": "AND"
+                },
+                "type": "select"
+              }
+            ]
+          },
+          "right": {
+            "type": "unary",
+            "op": "IS NULL",
+            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
+          },
+          "op": "OR"
+        },
+        "op": "OR"
+      },
+      "op": "AND"
+    },
+    "type": "select"
+  }
+]
