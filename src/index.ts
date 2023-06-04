@@ -1,4 +1,4 @@
-import { filter, isArray, isEmpty, isEqual, isString, map, reject, uniq, uniqWith } from "lodash";
+import { filter, isArray, isEmpty, isEqual, isString, map, reject, sortedUniq, uniqWith } from "lodash";
 import { Expr, From, nil, parse } from "pgsql-ast-parser";
 
 export class SqlIndexPredictor {
@@ -60,7 +60,7 @@ export class SqlIndexPredictor {
       return [];
     }, []);
 
-    return reject(uniqWith(map(this.processGraph(predictedIndexes), uniq), isEqual), isEmpty);
+    return reject(uniqWith(map(this.processGraph(predictedIndexes), sortedUniq), isEqual), isEmpty);
   }
 }
 
