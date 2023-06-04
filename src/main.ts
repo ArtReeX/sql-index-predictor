@@ -1,4 +1,4 @@
-import { castArray, isEmpty, isEqual, map, reject, uniqWith } from "lodash";
+import { filter, isArray, isEmpty, isEqual, isString, reject, uniqWith } from "lodash";
 import { Expr, From, nil, parse } from "pgsql-ast-parser";
 
 export class SqlIndexPredictor {
@@ -15,10 +15,7 @@ export class SqlIndexPredictor {
     if (data.type === "binary") {
       // "OR" BINARY OPERATORS
       if (data.op === "OR") {
-        return [
-          ...this.handleExpr(data.left, from).map((index) => castArray(index)),
-          ...this.handleExpr(data.right, from).map((index) => castArray(index)),
-        ];
+        return [this.handleExpr(data.left, from), this.handleExpr(data.right, from)];
       }
 
       // "AND" AND OTHERS BINARY OPERATORS
@@ -46,6 +43,14 @@ export class SqlIndexPredictor {
     return [];
   }
 
+  private processGraph(graph: any[], result: string[][] = []): string[][] {
+    result.push(filter(graph, isString));
+
+    filter(graph, isArray).forEach((subGraph) => this.processGraph(subGraph, result));
+
+    return result;
+  }
+
   public predictIndexes(sqlQuery: string): string[][] {
     const predictedIndexes = parse(sqlQuery).reduce<string[][]>((indexes, ast) => {
       if (ast.type === "select") {
@@ -55,8 +60,6 @@ export class SqlIndexPredictor {
       return [];
     }, []);
 
-    return reject(map(uniqWith(predictedIndexes, isEqual), castArray), isEmpty);
+    return reject(uniqWith(this.processGraph(predictedIndexes), isEqual), isEmpty);
   }
 }
-
-export default SqlIndexPredictor;
