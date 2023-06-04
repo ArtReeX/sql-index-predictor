@@ -2,24 +2,24 @@ import { filter, isArray, isEmpty, isEqual, isString, reject, uniqWith } from "l
 import { Expr, From, nil, parse } from "pgsql-ast-parser";
 
 export class SqlIndexPredictor {
-  private handleExpr(data: Expr, from: From[] | nil): any[] {
+  private handleGraph(data: Expr, from: From[] | nil): any[] {
     if (data.type === "select" && data.where) {
-      return this.handleExpr(data.where, data.from);
+      return this.handleGraph(data.where, data.from);
     }
     if (data.type === "unary") {
-      return this.handleExpr(data.operand, from);
+      return this.handleGraph(data.operand, from);
     }
     if (data.type === "call") {
-      return data.args.map((ast) => this.handleExpr(ast, ast.type === "select" ? ast.from : from));
+      return data.args.map((ast) => this.handleGraph(ast, ast.type === "select" ? ast.from : from));
     }
     if (data.type === "binary") {
       // "OR" BINARY OPERATORS
       if (data.op === "OR") {
-        return [this.handleExpr(data.left, from), this.handleExpr(data.right, from)];
+        return [this.handleGraph(data.left, from), this.handleGraph(data.right, from)];
       }
 
       // "AND" AND OTHERS BINARY OPERATORS
-      return [...this.handleExpr(data.left, from), ...this.handleExpr(data.right, from)];
+      return [...this.handleGraph(data.left, from), ...this.handleGraph(data.right, from)];
     }
     if (data.type === "ref") {
       for (const table of from || []) {
@@ -51,10 +51,10 @@ export class SqlIndexPredictor {
     return result;
   }
 
-  public predictIndexes(sqlQuery: string): string[][] {
+  public predict(sqlQuery: string): string[][] {
     const predictedIndexes = parse(sqlQuery).reduce<string[][]>((indexes, ast) => {
       if (ast.type === "select") {
-        return [...indexes, ...this.handleExpr(ast, ast.from)];
+        return [...indexes, ...this.handleGraph(ast, ast.from)];
       }
 
       return [];

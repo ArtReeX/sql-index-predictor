@@ -5,7 +5,7 @@ select "chats".*, "chats"."name" = 'General' as "is_general_channel", "chats"."t
 ```ts
 import SqlIndexPredictor from "./main";
 
-const indexes = new SqlIndexPredictor().predictIndexes(`SQL QUERY HERE`);
+const indexes = new SqlIndexPredictor().predict(`SQL QUERY HERE`);
 
 console.log(indexes);
 ```
