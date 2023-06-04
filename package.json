@@ -2,7 +2,8 @@
   "name": "sql-index-autocreator",
   "version": "1.0.0",
   "description": "A module that allows you to automatically predict the indexes that need to be created based on queries.",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'src/**/*.spec.ts' --exec ts-node src/main.ts"
