@@ -3,7 +3,7 @@ select "chats".*, "chats"."name" = 'General' as "is_general_channel", "chats"."t
 ```
 
 ```ts
-import SqlIndexPredictor from "./main";
+import SqlIndexPredictor from "sql-index-predictor";
 
 const indexes = new SqlIndexPredictor().predict(`SQL QUERY HERE`);
 
