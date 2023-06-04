@@ -63,3 +63,5 @@ export class SqlIndexPredictor {
     return reject(uniqWith(this.processGraph(predictedIndexes), isEqual), isEmpty);
   }
 }
+
+export default SqlIndexPredictor;
