@@ -1,9 +1,9 @@
 {
   "name": "sql-index-predictor",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A module that allows you to automatically predict the indexes that need to be created based on queries.",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
   "scripts": {
     "build": "rm -rf ./dist && tsc",
     "dev": "nodemon --watch 'src/**/*.ts' --ignore 'src/**/*.spec.ts' --exec ts-node src/main.ts"
