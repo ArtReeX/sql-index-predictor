@@ -1,6 +1,6 @@
 {
   "name": "sql-index-predictor",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "A module that allows you to automatically predict the indexes that need to be created based on queries.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
