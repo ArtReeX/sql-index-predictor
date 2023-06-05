@@ -1,55 +1,7 @@
 [
   {
     "columns": [
-      { "expr": { "type": "ref", "table": { "name": "chats" }, "name": "*" } },
-      {
-        "expr": {
-          "type": "binary",
-          "left": { "type": "ref", "table": { "name": "chats" }, "name": "name" },
-          "right": { "type": "string", "value": "General" },
-          "op": "="
-        },
-        "alias": { "name": "is_general_channel" }
-      },
-      {
-        "expr": {
-          "type": "binary",
-          "left": { "type": "ref", "table": { "name": "chats" }, "name": "type" },
-          "right": { "type": "string", "value": "CASE_GROUP" },
-          "op": "="
-        },
-        "alias": { "name": "is_case_group" }
-      },
-      {
-        "expr": {
-          "columns": [
-            {
-              "expr": {
-                "type": "call",
-                "function": { "name": "greatest" },
-                "args": [
-                  {
-                    "type": "call",
-                    "function": { "name": "max" },
-                    "args": [{ "type": "ref", "table": { "name": "messages" }, "name": "created_at" }]
-                  },
-                  { "type": "ref", "table": { "name": "chats" }, "name": "created_at" }
-                ]
-              }
-            }
-          ],
-          "from": [{ "type": "table", "name": { "name": "chat_messages", "alias": "messages" } }],
-          "limit": { "limit": { "type": "integer", "value": 1 } },
-          "where": {
-            "type": "binary",
-            "left": { "type": "ref", "table": { "name": "messages" }, "name": "chat_id" },
-            "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
-            "op": "="
-          },
-          "type": "select"
-        },
-        "alias": { "name": "last_message_date" }
-      },
+      { "expr": { "type": "ref", "table": { "name": "showcase" }, "name": "*" } },
       {
         "expr": {
           "columns": [
@@ -57,26 +9,107 @@
               "expr": {
                 "type": "cast",
                 "operand": {
-                  "type": "call",
-                  "function": { "name": "count" },
-                  "args": [{ "type": "ref", "table": { "name": "messages" }, "name": "id" }]
+                  "type": "cast",
+                  "operand": {
+                    "type": "call",
+                    "function": { "name": "count" },
+                    "args": [{ "type": "ref", "table": { "name": "sc_to_acc" }, "name": "id" }]
+                  },
+                  "to": { "name": "int" }
                 },
-                "to": { "name": "int" }
+                "to": { "name": "bool" }
               }
             }
           ],
-          "from": [{ "type": "table", "name": { "name": "chat_messages", "alias": "messages" } }],
-          "limit": { "limit": { "type": "integer", "value": 1 } },
+          "from": [{ "type": "table", "name": { "name": "showcases_to_accounts", "alias": "sc_to_acc" } }],
           "where": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "sc_to_acc" }, "name": "showcase_id" },
+              "right": { "type": "ref", "table": { "name": "showcase" }, "name": "id" },
+              "op": "="
+            },
+            "right": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "sc_to_acc" }, "name": "account_id" },
+              "right": { "type": "string", "value": "1" },
+              "op": "="
+            },
+            "op": "AND"
+          },
+          "type": "select"
+        },
+        "alias": { "name": "is_saved" }
+      },
+      { "expr": { "type": "ref", "table": { "name": "showcase" }, "name": "*" } },
+      {
+        "expr": {
+          "columns": [
+            {
+              "expr": {
+                "type": "call",
+                "function": { "name": "count" },
+                "distinct": "distinct",
+                "args": [{ "type": "ref", "table": { "name": "comments" }, "name": "id" }]
+              }
+            }
+          ],
+          "from": [{ "type": "table", "name": { "name": "showcases_comments", "alias": "comments" } }],
+          "where": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "comments" }, "name": "showcase_id" },
+              "right": { "type": "ref", "table": { "name": "showcase" }, "name": "id" },
+              "op": "="
+            },
+            "right": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "comments" }, "name": "is_draft" },
+              "right": { "type": "string", "value": "1" },
+              "op": "="
+            },
+            "op": "AND"
+          },
+          "type": "select"
+        },
+        "alias": { "name": "comments_count" }
+      },
+      { "expr": { "type": "ref", "table": { "name": "showcase" }, "name": "id" } }
+    ],
+    "distinct": "distinct",
+    "from": [{ "type": "table", "name": { "name": "showcases", "alias": "showcase" } }],
+    "limit": { "limit": { "type": "string", "value": "1" } },
+    "orderBy": [{ "by": { "type": "ref", "table": { "name": "showcase" }, "name": "updated_at" }, "order": "DESC" }],
+    "where": {
+      "type": "binary",
+      "left": {
+        "type": "binary",
+        "left": {
+          "type": "binary",
+          "left": { "type": "ref", "table": { "name": "showcase" }, "name": "status" },
+          "right": { "type": "string", "value": "1" },
+          "op": "="
+        },
+        "right": {
+          "type": "binary",
+          "left": {
             "type": "binary",
             "left": {
               "type": "binary",
               "left": {
                 "type": "binary",
+                "left": { "type": "ref", "table": { "name": "showcase" }, "name": "owner_id" },
+                "right": { "type": "string", "value": "1" },
+                "op": "="
+              },
+              "right": {
+                "type": "binary",
                 "left": {
                   "type": "binary",
-                  "left": { "type": "ref", "table": { "name": "messages" }, "name": "chat_id" },
-                  "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
+                  "left": { "type": "ref", "table": { "name": "showcase" }, "name": "status" },
+                  "right": { "type": "string", "value": "1" },
                   "op": "="
                 },
                 "right": {
@@ -84,33 +117,256 @@
                   "function": { "name": "exists" },
                   "args": [
                     {
-                      "columns": [{ "expr": { "type": "ref", "table": { "name": "receivers" }, "name": "*" } }],
-                      "from": [
-                        { "type": "table", "name": { "name": "chat_messages_to_accounts", "alias": "receivers" } }
-                      ],
+                      "columns": [{ "expr": { "type": "ref", "table": { "name": "associate" }, "name": "*" } }],
+                      "from": [{ "type": "table", "name": { "name": "associates_accounts", "alias": "associate" } }],
                       "where": {
                         "type": "binary",
                         "left": {
                           "type": "binary",
                           "left": {
                             "type": "binary",
-                            "left": { "type": "ref", "table": { "name": "receivers" }, "name": "message_id" },
-                            "right": { "type": "ref", "table": { "name": "messages" }, "name": "id" },
-                            "op": "="
+                            "left": {
+                              "type": "binary",
+                              "left": { "type": "ref", "table": { "name": "associate" }, "name": "status" },
+                              "right": { "type": "string", "value": "1" },
+                              "op": "="
+                            },
+                            "right": {
+                              "type": "binary",
+                              "left": { "type": "ref", "table": { "name": "associate" }, "name": "virtual" },
+                              "right": { "type": "string", "value": "1" },
+                              "op": "="
+                            },
+                            "op": "AND"
                           },
                           "right": {
                             "type": "binary",
-                            "left": { "type": "ref", "name": "receiver_id" },
-                            "right": { "type": "string", "value": "3" },
-                            "op": "="
+                            "left": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "associate" }, "name": "from_id" },
+                                "right": { "type": "ref", "table": { "name": "showcase" }, "name": "owner_id" },
+                                "op": "="
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "associate" }, "name": "to_id" },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "right": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "associate" }, "name": "from_id" },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "associate" }, "name": "to_id" },
+                                "right": { "type": "ref", "table": { "name": "showcase" }, "name": "owner_id" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "op": "OR"
                           },
                           "op": "AND"
                         },
                         "right": {
                           "type": "binary",
-                          "left": { "type": "ref", "name": "receiver_read" },
-                          "right": { "type": "boolean", "value": false },
-                          "op": "="
+                          "left": {
+                            "type": "binary",
+                            "left": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "ref",
+                                  "table": { "name": "showcase" },
+                                  "name": "share_outer_categories_first"
+                                },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "ref",
+                                  "table": { "name": "showcase" },
+                                  "name": "share_outer_categories_second"
+                                },
+                                "right": { "type": "string", "value": "2" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "right": {
+                              "type": "unary",
+                              "op": "NOT",
+                              "operand": {
+                                "type": "call",
+                                "function": { "name": "exists" },
+                                "args": [
+                                  {
+                                    "columns": [
+                                      { "expr": { "type": "ref", "table": { "name": "categories" }, "name": "*" } }
+                                    ],
+                                    "from": [
+                                      {
+                                        "type": "table",
+                                        "name": { "name": "associate_categories", "alias": "categories" }
+                                      },
+                                      {
+                                        "type": "table",
+                                        "name": { "name": "associates_to_categories" },
+                                        "join": {
+                                          "type": "INNER JOIN",
+                                          "on": {
+                                            "type": "binary",
+                                            "left": { "type": "ref", "table": { "name": "categories" }, "name": "id" },
+                                            "right": {
+                                              "type": "ref",
+                                              "table": { "name": "associates_to_categories" },
+                                              "name": "associate_category_id"
+                                            },
+                                            "op": "="
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "where": {
+                                      "type": "binary",
+                                      "left": {
+                                        "type": "binary",
+                                        "left": {
+                                          "type": "ref",
+                                          "table": { "name": "associates_to_categories" },
+                                          "name": "associate_id"
+                                        },
+                                        "right": { "type": "ref", "table": { "name": "associate" }, "name": "id" },
+                                        "op": "="
+                                      },
+                                      "right": {
+                                        "type": "binary",
+                                        "left": {
+                                          "type": "ref",
+                                          "table": { "name": "categories" },
+                                          "name": "owner_id"
+                                        },
+                                        "right": { "type": "ref", "table": { "name": "showcase" }, "name": "owner_id" },
+                                        "op": "="
+                                      },
+                                      "op": "AND"
+                                    },
+                                    "type": "select"
+                                  }
+                                ]
+                              }
+                            },
+                            "op": "AND"
+                          },
+                          "right": {
+                            "type": "call",
+                            "function": { "name": "exists" },
+                            "args": [
+                              {
+                                "columns": [
+                                  { "expr": { "type": "ref", "table": { "name": "categories" }, "name": "*" } }
+                                ],
+                                "from": [
+                                  {
+                                    "type": "table",
+                                    "name": { "name": "associate_categories", "alias": "categories" }
+                                  },
+                                  {
+                                    "type": "table",
+                                    "name": { "name": "associates_to_categories" },
+                                    "join": {
+                                      "type": "INNER JOIN",
+                                      "on": {
+                                        "type": "binary",
+                                        "left": { "type": "ref", "table": { "name": "categories" }, "name": "id" },
+                                        "right": {
+                                          "type": "ref",
+                                          "table": { "name": "associates_to_categories" },
+                                          "name": "associate_category_id"
+                                        },
+                                        "op": "="
+                                      }
+                                    }
+                                  }
+                                ],
+                                "where": {
+                                  "type": "binary",
+                                  "left": {
+                                    "type": "binary",
+                                    "left": {
+                                      "type": "ref",
+                                      "table": { "name": "associates_to_categories" },
+                                      "name": "associate_id"
+                                    },
+                                    "right": { "type": "ref", "table": { "name": "associate" }, "name": "id" },
+                                    "op": "="
+                                  },
+                                  "right": {
+                                    "type": "call",
+                                    "function": { "name": "exists" },
+                                    "args": [
+                                      {
+                                        "columns": [
+                                          {
+                                            "expr": { "type": "ref", "table": { "name": "showcases_map" }, "name": "*" }
+                                          }
+                                        ],
+                                        "from": [
+                                          {
+                                            "type": "table",
+                                            "name": {
+                                              "name": "associate_categories_to_showcases",
+                                              "alias": "showcases_map"
+                                            }
+                                          }
+                                        ],
+                                        "where": {
+                                          "type": "binary",
+                                          "left": {
+                                            "type": "binary",
+                                            "left": {
+                                              "type": "ref",
+                                              "table": { "name": "showcases_map" },
+                                              "name": "category_id"
+                                            },
+                                            "right": { "type": "ref", "table": { "name": "categories" }, "name": "id" },
+                                            "op": "="
+                                          },
+                                          "right": {
+                                            "type": "binary",
+                                            "left": {
+                                              "type": "ref",
+                                              "table": { "name": "showcases_map" },
+                                              "name": "showcase_id"
+                                            },
+                                            "right": { "type": "ref", "table": { "name": "showcase" }, "name": "id" },
+                                            "op": "="
+                                          },
+                                          "op": "AND"
+                                        },
+                                        "type": "select"
+                                      }
+                                    ]
+                                  },
+                                  "op": "AND"
+                                },
+                                "type": "select"
+                              }
+                            ]
+                          },
+                          "op": "OR"
                         },
                         "op": "AND"
                       },
@@ -120,228 +376,267 @@
                 },
                 "op": "AND"
               },
+              "op": "OR"
+            },
+            "right": {
+              "type": "binary",
+              "left": {
+                "type": "binary",
+                "left": { "type": "ref", "table": { "name": "showcase" }, "name": "status" },
+                "right": { "type": "string", "value": "1" },
+                "op": "="
+              },
               "right": {
-                "type": "unary",
-                "op": "NOT",
-                "operand": {
-                  "type": "call",
-                  "function": { "name": "exists" },
-                  "args": [
-                    {
-                      "columns": [{ "expr": { "type": "ref", "table": { "name": "meeting" }, "name": "*" } }],
-                      "from": [{ "type": "table", "name": { "name": "meetings", "alias": "meeting" } }],
-                      "where": {
-                        "type": "binary",
-                        "left": {
-                          "type": "binary",
-                          "left": { "type": "ref", "table": { "name": "meeting" }, "name": "id" },
-                          "right": { "type": "ref", "table": { "name": "messages" }, "name": "meeting_id" },
-                          "op": "="
-                        },
-                        "right": {
-                          "type": "unary",
-                          "op": "NOT",
-                          "operand": {
+                "type": "call",
+                "function": { "name": "exists" },
+                "args": [
+                  {
+                    "columns": [{ "expr": { "type": "ref", "table": { "name": "departments" }, "name": "*" } }],
+                    "from": [
+                      { "type": "table", "name": { "name": "departments" } },
+                      {
+                        "type": "table",
+                        "name": { "name": "departments_to_showcases" },
+                        "join": {
+                          "type": "INNER JOIN",
+                          "on": {
                             "type": "binary",
-                            "left": { "type": "ref", "name": "organizer_id" },
-                            "right": { "type": "string", "value": "3" },
+                            "left": { "type": "ref", "table": { "name": "departments" }, "name": "id" },
+                            "right": {
+                              "type": "ref",
+                              "table": { "name": "departments_to_showcases" },
+                              "name": "department_id"
+                            },
                             "op": "="
                           }
+                        }
+                      }
+                    ],
+                    "where": {
+                      "type": "binary",
+                      "left": {
+                        "type": "binary",
+                        "left": {
+                          "type": "ref",
+                          "table": { "name": "departments_to_showcases" },
+                          "name": "showcase_id"
                         },
-                        "op": "AND"
+                        "right": { "type": "ref", "table": { "name": "showcase" }, "name": "id" },
+                        "op": "="
                       },
-                      "type": "select"
-                    }
-                  ]
-                }
+                      "right": {
+                        "type": "call",
+                        "function": { "name": "exists" },
+                        "args": [
+                          {
+                            "columns": [{ "expr": { "type": "ref", "table": { "name": "staffs_map" }, "name": "*" } }],
+                            "from": [
+                              { "type": "table", "name": { "name": "departments_to_accounts", "alias": "staffs_map" } }
+                            ],
+                            "where": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "staffs_map" }, "name": "department_id" },
+                                "right": { "type": "ref", "table": { "name": "departments" }, "name": "id" },
+                                "op": "="
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": { "type": "ref", "table": { "name": "staffs_map" }, "name": "account_id" },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "type": "select"
+                          }
+                        ]
+                      },
+                      "op": "AND"
+                    },
+                    "type": "select"
+                  }
+                ]
               },
               "op": "AND"
             },
-            "right": {
-              "type": "binary",
-              "left": { "type": "ref", "table": { "name": "messages" }, "name": "unix_ts" },
-              "right": {
-                "columns": [{ "expr": { "type": "ref", "name": "cleared_unix_ts" } }],
-                "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
-                "limit": { "limit": { "type": "integer", "value": 1 } },
-                "where": {
-                  "type": "binary",
-                  "left": {
-                    "type": "binary",
-                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
-                    "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
-                    "op": "="
-                  },
-                  "right": {
-                    "type": "binary",
-                    "left": { "type": "ref", "name": "account_id" },
-                    "right": { "type": "string", "value": "3" },
-                    "op": "="
-                  },
-                  "op": "AND"
-                },
-                "type": "select"
-              },
-              "op": ">"
-            },
-            "op": "AND"
-          },
-          "type": "select"
-        },
-        "alias": { "name": "unread_count" }
-      },
-      {
-        "expr": {
-          "columns": [{ "expr": { "type": "ref", "name": "cleared_unix_ts" } }],
-          "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
-          "limit": { "limit": { "type": "integer", "value": 1 } },
-          "where": {
-            "type": "binary",
-            "left": {
-              "type": "binary",
-              "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
-              "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
-              "op": "="
-            },
-            "right": {
-              "type": "binary",
-              "left": { "type": "ref", "name": "account_id" },
-              "right": { "type": "string", "value": "3" },
-              "op": "="
-            },
-            "op": "AND"
-          },
-          "type": "select"
-        },
-        "alias": { "name": "cleared_unix_ts" }
-      },
-      {
-        "expr": {
-          "columns": [{ "expr": { "type": "ref", "name": "muted_until" } }],
-          "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
-          "limit": { "limit": { "type": "integer", "value": 1 } },
-          "where": {
-            "type": "binary",
-            "left": {
-              "type": "binary",
-              "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
-              "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
-              "op": "="
-            },
-            "right": {
-              "type": "binary",
-              "left": { "type": "ref", "name": "account_id" },
-              "right": { "type": "string", "value": "3" },
-              "op": "="
-            },
-            "op": "AND"
-          },
-          "type": "select"
-        },
-        "alias": { "name": "muted_until" }
-      }
-    ],
-    "from": [{ "type": "table", "name": { "name": "chats" } }],
-    "orderBy": [
-      { "by": { "type": "ref", "name": "is_general_channel" }, "order": "DESC" },
-      { "by": { "type": "ref", "name": "is_case_group" }, "order": "DESC" },
-      { "by": { "type": "ref", "name": "last_message_date" }, "order": "DESC", "nulls": "LAST" }
-    ],
-    "where": {
-      "type": "binary",
-      "left": {
-        "type": "binary",
-        "left": {
-          "type": "binary",
-          "left": {
-            "type": "binary",
-            "left": { "type": "ref", "table": { "name": "chats" }, "name": "type" },
-            "right": {
-              "type": "list",
-              "expressions": [
-                { "type": "string", "value": "DIALOGUE" },
-                { "type": "string", "value": "PATIENT_DIALOGUE" }
-              ]
-            },
-            "op": "IN"
+            "op": "OR"
           },
           "right": {
-            "type": "call",
-            "function": { "name": "exists" },
-            "args": [
-              {
-                "columns": [{ "expr": { "type": "ref", "table": { "name": "accounts_map" }, "name": "*" } }],
-                "from": [{ "type": "table", "name": { "name": "accounts_to_chats", "alias": "accounts_map" } }],
-                "where": {
-                  "type": "binary",
-                  "left": {
-                    "type": "binary",
-                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "chat_id" },
-                    "right": { "type": "ref", "table": { "name": "chats" }, "name": "id" },
-                    "op": "="
-                  },
-                  "right": {
-                    "type": "binary",
-                    "left": { "type": "ref", "table": { "name": "accounts_map" }, "name": "account_id" },
-                    "right": { "type": "string", "value": "3" },
-                    "op": "="
-                  },
-                  "op": "AND"
-                },
-                "type": "select"
-              }
-            ]
-          },
-          "op": "AND"
-        },
-        "right": {
-          "type": "binary",
-          "left": {
-            "type": "call",
-            "function": { "name": "exists" },
-            "args": [
-              {
-                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
-                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
-                "where": {
-                  "type": "binary",
-                  "left": {
+            "type": "binary",
+            "left": {
+              "type": "binary",
+              "left": { "type": "ref", "table": { "name": "showcase" }, "name": "status" },
+              "right": { "type": "string", "value": "1" },
+              "op": "="
+            },
+            "right": {
+              "type": "call",
+              "function": { "name": "exists" },
+              "args": [
+                {
+                  "columns": [{ "expr": { "type": "ref", "table": { "name": "organization" }, "name": "*" } }],
+                  "from": [
+                    { "type": "table", "name": { "name": "accounts", "alias": "organization" } },
+                    {
+                      "type": "table",
+                      "name": { "name": "outer_departments_organizations" },
+                      "join": {
+                        "type": "INNER JOIN",
+                        "on": {
+                          "type": "binary",
+                          "left": { "type": "ref", "table": { "name": "organization" }, "name": "id" },
+                          "right": {
+                            "type": "ref",
+                            "table": { "name": "outer_departments_organizations" },
+                            "name": "organization_id"
+                          },
+                          "op": "="
+                        }
+                      }
+                    }
+                  ],
+                  "where": {
                     "type": "binary",
                     "left": {
                       "type": "binary",
-                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
-                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
-                      "op": "="
+                      "left": {
+                        "type": "binary",
+                        "left": {
+                          "type": "ref",
+                          "table": { "name": "outer_departments_organizations" },
+                          "name": "showcase_id"
+                        },
+                        "right": { "type": "ref", "table": { "name": "showcase" }, "name": "id" },
+                        "op": "="
+                      },
+                      "right": {
+                        "type": "call",
+                        "function": { "name": "exists" },
+                        "args": [
+                          {
+                            "columns": [
+                              {
+                                "expr": {
+                                  "type": "ref",
+                                  "table": { "name": "linked_private_accounts_map" },
+                                  "name": "*"
+                                }
+                              }
+                            ],
+                            "from": [
+                              {
+                                "type": "table",
+                                "name": { "name": "business_account_users", "alias": "linked_private_accounts_map" }
+                              }
+                            ],
+                            "where": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "binary",
+                                  "left": {
+                                    "type": "ref",
+                                    "table": { "name": "linked_private_accounts_map" },
+                                    "name": "business_account_id"
+                                  },
+                                  "right": { "type": "ref", "table": { "name": "organization" }, "name": "id" },
+                                  "op": "="
+                                },
+                                "right": {
+                                  "type": "binary",
+                                  "left": {
+                                    "type": "ref",
+                                    "table": { "name": "linked_private_accounts_map" },
+                                    "name": "status"
+                                  },
+                                  "right": { "type": "string", "value": "1" },
+                                  "op": "="
+                                },
+                                "op": "AND"
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "ref",
+                                  "table": { "name": "linked_private_accounts_map" },
+                                  "name": "account_id"
+                                },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "type": "select"
+                          }
+                        ]
+                      },
+                      "op": "AND"
                     },
                     "right": {
                       "type": "unary",
-                      "op": "IS NULL",
-                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
+                      "op": "NOT",
+                      "operand": {
+                        "type": "call",
+                        "function": { "name": "exists" },
+                        "args": [
+                          {
+                            "columns": [
+                              {
+                                "expr": {
+                                  "type": "ref",
+                                  "table": { "name": "departments_as_organization_map" },
+                                  "name": "*"
+                                }
+                              }
+                            ],
+                            "from": [
+                              {
+                                "type": "table",
+                                "name": {
+                                  "name": "departments_to_accounts",
+                                  "alias": "departments_as_organization_map"
+                                }
+                              }
+                            ],
+                            "where": {
+                              "type": "binary",
+                              "left": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "ref",
+                                  "table": { "name": "departments_as_organization_map" },
+                                  "name": "organization_id"
+                                },
+                                "right": { "type": "ref", "table": { "name": "organization" }, "name": "id" },
+                                "op": "="
+                              },
+                              "right": {
+                                "type": "binary",
+                                "left": {
+                                  "type": "ref",
+                                  "table": { "name": "departments_as_organization_map" },
+                                  "name": "account_id"
+                                },
+                                "right": { "type": "string", "value": "1" },
+                                "op": "="
+                              },
+                              "op": "AND"
+                            },
+                            "type": "select"
+                          }
+                        ]
+                      }
                     },
                     "op": "AND"
                   },
-                  "right": {
-                    "type": "binary",
-                    "left": { "type": "ref", "table": { "name": "case" }, "name": "status" },
-                    "right": {
-                      "type": "list",
-                      "expressions": [
-                        { "type": "string", "value": "ACTIVE" },
-                        { "type": "string", "value": "LOCKED" }
-                      ]
-                    },
-                    "op": "IN"
-                  },
-                  "op": "AND"
-                },
-                "type": "select"
-              }
-            ]
-          },
-          "right": {
-            "type": "unary",
-            "op": "IS NULL",
-            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
+                  "type": "select"
+                }
+              ]
+            },
+            "op": "AND"
           },
           "op": "OR"
         },
@@ -349,101 +644,9 @@
       },
       "right": {
         "type": "binary",
-        "left": {
-          "type": "binary",
-          "left": {
-            "type": "call",
-            "function": { "name": "exists" },
-            "args": [
-              {
-                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
-                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
-                "where": {
-                  "type": "binary",
-                  "left": {
-                    "type": "binary",
-                    "left": {
-                      "type": "binary",
-                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
-                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
-                      "op": "="
-                    },
-                    "right": {
-                      "type": "unary",
-                      "op": "IS NULL",
-                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
-                    },
-                    "op": "AND"
-                  },
-                  "right": {
-                    "type": "binary",
-                    "left": { "type": "ref", "table": { "name": "case" }, "name": "owner_id" },
-                    "right": { "type": "string", "value": "3" },
-                    "op": "="
-                  },
-                  "op": "AND"
-                },
-                "type": "select"
-              }
-            ]
-          },
-          "right": {
-            "type": "unary",
-            "op": "IS NULL",
-            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
-          },
-          "op": "OR"
-        },
-        "right": {
-          "type": "binary",
-          "left": {
-            "type": "call",
-            "function": { "name": "exists" },
-            "args": [
-              {
-                "columns": [{ "expr": { "type": "ref", "table": { "name": "case" }, "name": "*" } }],
-                "from": [{ "type": "table", "name": { "name": "cases", "alias": "case" } }],
-                "where": {
-                  "type": "binary",
-                  "left": {
-                    "type": "binary",
-                    "left": {
-                      "type": "binary",
-                      "left": { "type": "ref", "table": { "name": "case" }, "name": "id" },
-                      "right": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" },
-                      "op": "="
-                    },
-                    "right": {
-                      "type": "unary",
-                      "op": "IS NULL",
-                      "operand": { "type": "ref", "table": { "name": "case" }, "name": "deleted_at" }
-                    },
-                    "op": "AND"
-                  },
-                  "right": {
-                    "type": "unary",
-                    "op": "NOT",
-                    "operand": {
-                      "type": "binary",
-                      "left": { "type": "ref", "table": { "name": "case" }, "name": "owner_id" },
-                      "right": { "type": "string", "value": "3" },
-                      "op": "="
-                    }
-                  },
-                  "op": "AND"
-                },
-                "type": "select"
-              }
-            ]
-          },
-          "right": {
-            "type": "unary",
-            "op": "IS NULL",
-            "operand": { "type": "ref", "table": { "name": "chats" }, "name": "case_id" }
-          },
-          "op": "OR"
-        },
-        "op": "OR"
+        "left": { "type": "ref", "table": { "name": "showcase" }, "name": "title" },
+        "right": { "type": "string", "value": "1" },
+        "op": "~*"
       },
       "op": "AND"
     },
