@@ -1,17 +1,4 @@
-import {
-  concat,
-  filter,
-  groupBy,
-  head,
-  isArray,
-  isEmpty,
-  isEqual,
-  isString,
-  reject,
-  uniq,
-  uniqWith,
-  values,
-} from "lodash";
+import _ from "lodash";
 import { Expr, SelectFromStatement, parse } from "pgsql-ast-parser";
 
 export class SqlIndexPredictor {
@@ -25,9 +12,7 @@ export class SqlIndexPredictor {
       return this.handleGraph(children.operand, parents);
     }
     if (children.type === "call") {
-      return children.args.map((ast) => {
-        return this.handleGraph(ast, concat(ast.type === "select" ? ast : [], parents));
-      });
+      return children.args.map((ast) => this.handleGraph(ast, _.concat(ast.type === "select" ? ast : [], parents)));
     }
     if (children.type === "binary") {
       // "OR" BINARY OPERATORS
@@ -66,12 +51,12 @@ export class SqlIndexPredictor {
   }
 
   private processGraph(graph: any[], result: string[][] = []): string[][] {
-    result.push(uniq(filter(graph, isString)).sort());
+    result.push(_.uniq(_.filter(graph, _.isString)).sort());
 
-    filter(graph, isArray).forEach((subGraph) => this.processGraph(subGraph, result));
+    _.filter(graph, _.isArray).forEach((subGraph) => this.processGraph(subGraph, result));
 
     return result.reduce<string[][]>(
-      (indexes, index) => [...indexes, ...values(groupBy(index, (column) => head(column.split("."))))],
+      (indexes, index) => [...indexes, ..._.values(_.groupBy(index, (column) => _.head(column.split("."))))],
       []
     );
   }
@@ -86,7 +71,7 @@ export class SqlIndexPredictor {
         return [];
       }, []);
 
-      return reject(uniqWith(this.processGraph(predictedIndexes), isEqual), isEmpty).filter(
+      return _.reject(_.uniqWith(this.processGraph(predictedIndexes), _.isEqual), _.isEmpty).filter(
         (index) => index.length >= this.minIndexLength
       );
     } catch (err) {
