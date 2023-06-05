@@ -2,6 +2,8 @@ import { filter, isArray, isEmpty, isEqual, isString, reject, uniq, uniqWith } f
 import { Expr, SelectFromStatement, parse } from "pgsql-ast-parser";
 
 export class SqlIndexPredictor {
+  constructor(private readonly throwIfError: boolean = false, private readonly minIndexLength: number = 1) {}
+
   private handleGraph(children: Expr, parent: SelectFromStatement): any[] {
     if (children.type === "select" && children.where) {
       return this.handleGraph(children.where, children);
@@ -52,15 +54,24 @@ export class SqlIndexPredictor {
   }
 
   public predict(sqlQuery: string): string[][] {
-    const predictedIndexes = parse(sqlQuery).reduce<string[][]>((indexes, ast) => {
-      if (ast.type === "select") {
-        return [...indexes, ...this.handleGraph(ast, ast)];
+    try {
+      const predictedIndexes = parse(sqlQuery).reduce<string[][]>((indexes, ast) => {
+        if (ast.type === "select") {
+          return [...indexes, ...this.handleGraph(ast, ast)];
+        }
+
+        return [];
+      }, []);
+
+      return reject(uniqWith(this.processGraph(predictedIndexes), isEqual), isEmpty).filter(
+        (index) => index.length >= this.minIndexLength
+      );
+    } catch (err) {
+      if (this.throwIfError) {
+        throw err;
       }
-
       return [];
-    }, []);
-
-    return reject(uniqWith(this.processGraph(predictedIndexes), isEqual), isEmpty);
+    }
   }
 }
 
