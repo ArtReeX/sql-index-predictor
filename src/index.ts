@@ -78,7 +78,6 @@ export class SqlIndexPredictor {
 
   public predict(sqlQuery: string): string[][] {
     try {
-      console.log(JSON.stringify(parse(sqlQuery)));
       const predictedIndexes = parse(sqlQuery).reduce<string[][]>((indexes, ast) => {
         if (ast.type === "select") {
           return [...indexes, ...this.handleGraph(ast, [ast])];
